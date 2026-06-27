@@ -1,0 +1,104 @@
+spring:
+  profiles:
+    active: dev
+  application:
+    name: portfolio-backend
+
+---
+# Development profile (H2, in-memory)
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:h2:mem:portfoliodb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: password
+    driver-class-name: org.h2.Driver
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: true
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 1000ms
+  mail:
+    host: localhost
+    port: 2525
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
+---
+# Production profile (PostgreSQL, Redis, Upstash)
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+  data:
+    redis:
+      url: ${REDIS_URL}
+  mail:
+    host: ${SMTP_HOST:smtp.gmail.com}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME}
+    password: ${SMTP_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+---
+# Global configs
+portfolio:
+  jwt:
+    # A standard 256-bit key for HMAC-SHA256 (Base64 encoded: 'secretkeysecretkeysecretkeysecretkeysecretkeysecretkeysecretkeysecretkey')
+    secret: dGhlLXNhYXMtcG9ydGZvbGlvLXN1cGVyLXNlY3JldC1qd3Qtc2lnbmluZy1rZXktMjAyNjA2Mjc=
+    expiration-ms: 86400000 # 24 hours
+  email:
+    to: kalvaakhil.work@gmail.com
+    sender: noreply@akhilkalva.dev
+    enabled: ${EMAIL_NOTIFICATIONS_ENABLED:false}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+
+server:
+  port: 8080
+  error:
+    include-message: always
