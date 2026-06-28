@@ -65,7 +65,7 @@ const Resume: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-y-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
             <div className="flex items-center space-x-2">
               <Mail className="h-4 w-4 text-accent-purple" />
-              <a href="mailto:kalvaakhil.work@gmail.com" className="hover:underline">kalvaakhil.work@gmail.com</a>
+              <a href="mailto:kalvaakhilreddy080@gmail.com" className="hover:underline">kalvaakhilreddy080@gmail.com</a>
             </div>
             <div className="flex items-center space-x-2">
               <MapPin className="h-4 w-4 text-accent-purple" />
@@ -77,7 +77,7 @@ const Resume: React.FC = () => {
             </div>
             <div className="flex items-center space-x-2">
               <LinkedinIcon className="h-4 w-4 text-accent-purple" />
-              <a href="https://linkedin.com/in/akhil-kalva" target="_blank" rel="noopener noreferrer" className="hover:underline">linkedin.com/in/akhil-kalva</a>
+              <a href="https://www.linkedin.com/in/akhil-reddy-kalva-a0213418b/" target="_blank" rel="noopener noreferrer" className="hover:underline">linkedin.com/in/akhil-reddy-kalva-a0213418b</a>
             </div>
           </div>
         </div>

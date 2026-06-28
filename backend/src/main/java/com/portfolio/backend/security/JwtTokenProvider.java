@@ -4,6 +4,8 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -13,6 +15,8 @@ import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtTokenProvider.class);
 
     @Value("${portfolio.jwt.secret}")
     private String jwtSecret;
@@ -31,6 +35,8 @@ public class JwtTokenProvider {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
 
+        log.debug("Generating JWT token for user id={}, expires at {}", userPrincipal.getId(), expiryDate);
+
         return Jwts.builder()
                 .subject(Long.toString(userPrincipal.getId()))
                 .issuedAt(now)
@@ -46,7 +52,9 @@ public class JwtTokenProvider {
                 .parseSignedClaims(token)
                 .getPayload();
 
-        return Long.parseLong(claims.getSubject());
+        Long userId = Long.parseLong(claims.getSubject());
+        log.trace("Extracted user id={} from JWT", userId);
+        return userId;
     }
 
     public boolean validateToken(String authToken) {
@@ -57,15 +65,15 @@ public class JwtTokenProvider {
                     .parseSignedClaims(authToken);
             return true;
         } catch (SignatureException ex) {
-            System.err.println("Invalid JWT signature");
+            log.warn("Invalid JWT signature: {}", ex.getMessage());
         } catch (MalformedJwtException ex) {
-            System.err.println("Invalid JWT token");
+            log.warn("Malformed JWT token: {}", ex.getMessage());
         } catch (ExpiredJwtException ex) {
-            System.err.println("Expired JWT token");
+            log.warn("Expired JWT token for subject={}: {}", ex.getClaims().getSubject(), ex.getMessage());
         } catch (UnsupportedJwtException ex) {
-            System.err.println("Unsupported JWT token");
+            log.warn("Unsupported JWT token: {}", ex.getMessage());
         } catch (IllegalArgumentException ex) {
-            System.err.println("JWT claims string is empty.");
+            log.warn("JWT claims string is empty or null: {}", ex.getMessage());
         }
         return false;
     }

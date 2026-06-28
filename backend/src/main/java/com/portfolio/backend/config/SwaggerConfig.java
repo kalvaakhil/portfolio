@@ -30,7 +30,7 @@ public class SwaggerConfig {
                         .description("REST API endpoints powering the enterprise personal portfolio SaaS-like website.")
                         .contact(new Contact()
                                 .name("Akhil Kalva")
-                                .email("kalvaakhil.work@gmail.com")
+                                .email("kalvaakhilreddy080@gmail.com")
                                 .url("https://github.com/kalvaakhil")));
     }
 }

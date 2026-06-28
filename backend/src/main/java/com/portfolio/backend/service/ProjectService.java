@@ -4,6 +4,8 @@ import com.portfolio.backend.exception.ResourceNotFoundException;
 import com.portfolio.backend.model.Project;
 import com.portfolio.backend.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -15,29 +17,42 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProjectService {
 
+    private static final Logger log = LoggerFactory.getLogger(ProjectService.class);
+
     private final ProjectRepository projectRepository;
 
     @Cacheable(value = "projects")
     @Transactional(readOnly = true)
     public List<Project> getAllProjects() {
-        return projectRepository.findAll();
+        log.debug("Fetching all projects");
+        List<Project> projects = projectRepository.findAll();
+        log.debug("Fetched {} projects", projects.size());
+        return projects;
     }
 
     @Transactional(readOnly = true)
     public Project getProjectById(Long id) {
+        log.debug("Fetching project id={}", id);
         return projectRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
+                .orElseThrow(() -> {
+                    log.warn("Project not found with id: {}", id);
+                    return new ResourceNotFoundException("Project not found with id: " + id);
+                });
     }
 
     @CacheEvict(value = "projects", allEntries = true)
     @Transactional
     public Project createProject(Project project) {
-        return projectRepository.save(project);
+        log.info("Creating new project: '{}'", project.getTitle());
+        Project saved = projectRepository.save(project);
+        log.info("Project created with id={}, title='{}'", saved.getId(), saved.getTitle());
+        return saved;
     }
 
     @CacheEvict(value = "projects", allEntries = true)
     @Transactional
     public Project updateProject(Long id, Project projectDetails) {
+        log.info("Updating project id={}", id);
         Project project = getProjectById(id);
         project.setTitle(projectDetails.getTitle());
         project.setDescription(projectDetails.getDescription());
@@ -53,13 +68,17 @@ public class ProjectService {
         project.setPerformanceOptimizations(projectDetails.getPerformanceOptimizations());
         project.setSecurityFeatures(projectDetails.getSecurityFeatures());
         project.setFutureScope(projectDetails.getFutureScope());
-        return projectRepository.save(project);
+        Project updated = projectRepository.save(project);
+        log.info("Project id={} updated successfully", id);
+        return updated;
     }
 
     @CacheEvict(value = "projects", allEntries = true)
     @Transactional
     public void deleteProject(Long id) {
+        log.info("Deleting project id={}", id);
         Project project = getProjectById(id);
         projectRepository.delete(project);
+        log.info("Project id={} deleted successfully", id);
     }
 }

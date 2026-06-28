@@ -5,6 +5,8 @@ import com.portfolio.backend.dto.TrackRequest;
 import com.portfolio.backend.service.AnalyticsService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -13,12 +15,15 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AnalyticsController {
 
+    private static final Logger log = LoggerFactory.getLogger(AnalyticsController.class);
+
     private final AnalyticsService analyticsService;
 
     @PostMapping("/api/analytics/track")
     public ResponseEntity<Void> trackVisit(@RequestBody TrackRequest request, HttpServletRequest servletRequest) {
         String ipAddress = getClientIp(servletRequest);
         String userAgent = servletRequest.getHeader("User-Agent");
+        log.debug("POST /api/analytics/track — page={}, ip={}", request.getPagePath(), ipAddress);
         analyticsService.trackVisitor(ipAddress, userAgent, request.getPagePath(), request.getSessionId());
         return ResponseEntity.ok().build();
     }
@@ -26,13 +31,16 @@ public class AnalyticsController {
     @PostMapping("/api/downloads/track")
     public ResponseEntity<Void> trackDownload(@RequestBody TrackRequest request, HttpServletRequest servletRequest) {
         String ipAddress = getClientIp(servletRequest);
-        analyticsService.trackDownload(ipAddress, request.getFileType() != null ? request.getFileType() : "PDF_RESUME");
+        String fileType = request.getFileType() != null ? request.getFileType() : "PDF_RESUME";
+        log.info("POST /api/downloads/track — fileType={}, ip={}", fileType, ipAddress);
+        analyticsService.trackDownload(ipAddress, fileType);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/api/admin/analytics/summary")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AnalyticsSummary> getAnalyticsSummary() {
+        log.debug("GET /api/admin/analytics/summary — building analytics report");
         return ResponseEntity.ok(analyticsService.getSummary());
     }
 

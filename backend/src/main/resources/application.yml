@@ -83,7 +83,7 @@ portfolio:
     secret: dGhlLXNhYXMtcG9ydGZvbGlvLXN1cGVyLXNlY3JldC1qd3Qtc2lnbmluZy1rZXktMjAyNjA2Mjc=
     expiration-ms: 86400000 # 24 hours
   email:
-    to: kalvaakhil.work@gmail.com
+    to: kalvaakhilreddy080@gmail.com
     sender: noreply@akhilkalva.dev
     enabled: ${EMAIL_NOTIFICATIONS_ENABLED:false}
 
@@ -102,3 +102,20 @@ server:
   port: 8080
   error:
     include-message: always
+
+# ─────────────────────────────────────────
+# Logging Configuration
+# ─────────────────────────────────────────
+logging:
+  level:
+    root: WARN
+    com.portfolio.backend: INFO
+    org.springframework.web: WARN
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql: WARN
+  pattern:
+    console: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/portfolio-backend.log

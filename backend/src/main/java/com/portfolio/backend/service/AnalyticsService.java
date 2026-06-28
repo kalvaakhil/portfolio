@@ -7,11 +7,14 @@ import com.portfolio.backend.repository.DownloadRepository;
 import com.portfolio.backend.repository.MessageRepository;
 import com.portfolio.backend.repository.VisitorRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -21,12 +24,15 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AnalyticsService {
 
+    private static final Logger log = LoggerFactory.getLogger(AnalyticsService.class);
+
     private final VisitorRepository visitorRepository;
     private final DownloadRepository downloadRepository;
     private final MessageRepository messageRepository;
 
     private String hashIp(String ipAddress) {
         if (ipAddress == null || ipAddress.isBlank()) {
+            log.debug("Null/blank IP address received — using 'anonymous' hash");
             return "anonymous";
         }
         try {
@@ -38,15 +44,17 @@ public class AnalyticsService {
                 if (hex.length() == 1) hexString.append('0');
                 hexString.append(hex);
             }
-            return hexString.toString().substring(0, 16); // Short hash
-        } catch (Exception ex) {
-            return Integer.toString(ipAddress.hashCode());
+            return hexString.toString().substring(0, 16);
+        } catch (NoSuchAlgorithmException ex) {
+            log.error("SHA-256 algorithm not available for IP hashing — falling back to hashCode", ex);
+            return Integer.toHexString(ipAddress.hashCode());
         }
     }
 
     @Transactional
     public void trackVisitor(String ipAddress, String userAgent, String pagePath, String sessionId) {
         String ipHash = hashIp(ipAddress);
+        log.debug("Tracking visitor: ipHash={}, page={}, session={}", ipHash, pagePath, sessionId);
         Visitor visitor = Visitor.builder()
                 .ipHash(ipHash)
                 .userAgent(userAgent)
@@ -54,26 +62,31 @@ public class AnalyticsService {
                 .sessionId(sessionId)
                 .build();
         visitorRepository.save(visitor);
+        log.debug("Visitor tracked successfully for page={}", pagePath);
     }
 
     @Transactional
     public void trackDownload(String ipAddress, String fileType) {
         String ipHash = hashIp(ipAddress);
+        log.info("Tracking download: ipHash={}, fileType={}", ipHash, fileType);
         Download download = Download.builder()
                 .ipHash(ipHash)
                 .fileType(fileType)
                 .build();
         downloadRepository.save(download);
+        log.info("Download tracked: fileType={}", fileType);
     }
 
     @Transactional(readOnly = true)
     public AnalyticsSummary getSummary() {
+        log.info("Building analytics summary");
+
         long totalPageViews = visitorRepository.count();
         long totalDownloads = downloadRepository.count();
         long totalMessages = messageRepository.count();
 
         List<Visitor> allVisitors = visitorRepository.findAll();
-        
+
         long uniqueVisitors = allVisitors.stream()
                 .map(Visitor::getIpHash)
                 .distinct()
@@ -92,7 +105,7 @@ public class AnalyticsService {
         List<Visitor> recentVisitors = visitorRepository.findByVisitedAtAfterOrderByVisitedAtDesc(thirtyDaysAgo);
         Map<String, Long> viewsByDate = recentVisitors.stream()
                 .collect(Collectors.groupingBy(
-                        v -> v.getVisitedAt().toLocalDate().toString(),
+                        v -> v.getVisitedAt() != null ? v.getVisitedAt().toLocalDate().toString() : "",
                         Collectors.counting()
                 ));
 
@@ -100,7 +113,7 @@ public class AnalyticsService {
         List<Download> recentDownloads = downloadRepository.findByDownloadedAtAfterOrderByDownloadedAtDesc(thirtyDaysAgo);
         Map<String, Long> downloadsByDate = recentDownloads.stream()
                 .collect(Collectors.groupingBy(
-                        d -> d.getDownloadedAt().toLocalDate().toString(),
+                        d -> d.getDownloadedAt() != null ? d.getDownloadedAt().toLocalDate().toString() : "",
                         Collectors.counting()
                 ));
 
@@ -110,7 +123,7 @@ public class AnalyticsService {
 
         for (int i = 29; i >= 0; i--) {
             String dateStr = LocalDate.now().minusDays(i).toString();
-            
+
             Map<String, Object> viewMap = new HashMap<>();
             viewMap.put("date", dateStr);
             viewMap.put("views", viewsByDate.getOrDefault(dateStr, 0L));
@@ -121,6 +134,9 @@ public class AnalyticsService {
             downloadMap.put("downloads", downloadsByDate.getOrDefault(dateStr, 0L));
             downloadsPerDayList.add(downloadMap);
         }
+
+        log.info("Analytics summary: totalPageViews={}, uniqueVisitors={}, totalDownloads={}, totalMessages={}",
+                totalPageViews, uniqueVisitors, totalDownloads, totalMessages);
 
         return AnalyticsSummary.builder()
                 .totalPageViews(totalPageViews)

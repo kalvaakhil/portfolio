@@ -35,7 +35,7 @@ const Footer: React.FC = () => {
               <GithubIcon className="h-4 w-4" />
             </a>
             <a
-              href="https://linkedin.com/in/akhil-kalva"
+              href="https://www.linkedin.com/in/akhil-reddy-kalva-a0213418b/"
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 rounded-full border border-slate-200 dark:border-white/5 hover:border-accent-purple hover:text-accent-purple dark:text-slate-400 dark:hover:text-slate-100 transition-all duration-300"
@@ -44,7 +44,7 @@ const Footer: React.FC = () => {
               <LinkedinIcon className="h-4 w-4" />
             </a>
             <a
-              href="mailto:kalvaakhil.work@gmail.com"
+              href="mailto:kalvaakhilreddy080@gmail.com"
               className="p-2 rounded-full border border-slate-200 dark:border-white/5 hover:border-accent-purple hover:text-accent-purple dark:text-slate-400 dark:hover:text-slate-100 transition-all duration-300"
               aria-label="Email"
             >
